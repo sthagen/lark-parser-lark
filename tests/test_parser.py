@@ -784,6 +784,24 @@ def _make_full_earley_test(LEXER):
             self.assertEqual(ambig_tree.data, '_ambig')
             self.assertEqual(set(ambig_tree.children), expected)
 
+        @unittest.skipIf(LEXER=='basic', 'This ambiguity only occurs with the dynamic lexers')
+        def test_ambiguous_ignores(self):
+            grammar = """
+            !start: a "b"
+            !a: "a" | "a1" | "a12"
+            %ignore "1"
+            %ignore "2"
+            """
+
+            l = Lark(grammar, ambiguity='explicit', lexer=LEXER)
+            tree = l.parse('a12b')
+
+            expected = Tree('_ambig', [
+                Tree('start', [Tree('a', ['a']), 'b']),
+                Tree('start', [Tree('a', ['a1']), 'b']),
+                Tree('start', [Tree('a', ['a12']), 'b']),
+            ])
+            self.assertEqual(tree, expected)
 
         @unittest.skipIf(LEXER=='basic', "Requires dynamic lexer")
         def test_fruitflies_ambig(self):

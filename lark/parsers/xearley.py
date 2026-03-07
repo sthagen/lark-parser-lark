@@ -109,16 +109,15 @@ class Parser(BaseParser):
                     token_node = TokenNode(token, terminals[token.type])
                     new_item.node = node_cache[label] if label in node_cache else node_cache.setdefault(label, self.SymbolNode(*label))
                     new_item.node.add_family(new_item.s, item.rule, new_item.start, item.node, token_node)
-                elif item.is_complete and item.s == start_symbol:
-                    # Handle completed start symbols
+                else:
+                    # Handle items carried over due to ignores
                     new_item = Item(item.rule, item.ptr, item.start)
                     label = (new_item.s, new_item.start, i + 1)
                     new_item.node = node_cache[label] if label in node_cache else node_cache.setdefault(label, self.SymbolNode(*label))
-                    # new_item.node and item.node both represent the start symbol, so merge their children
-                    for child in item.node.children:
-                        new_item.node.add_family(new_item.s, child.rule, new_item.start, child.left, child.right)
-                else:
-                    new_item = item
+                    if item.node:
+                        # new_item.node and item.node both represent the same symbol, so merge their children
+                        for child in item.node.children:
+                            new_item.node.add_family(new_item.s, child.rule, new_item.start, child.left, child.right)
 
                 if new_item.expect in self.TERMINALS:
                     # add (B ::= Aai+1.B, h, y) to Q'
